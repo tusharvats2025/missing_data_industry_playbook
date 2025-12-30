@@ -1,0 +1,13 @@
+# Core dependencies (already used)
+numpy>=1.21.0
+pandas>=1.3.0
+matplotlib>=3.4.0
+scipy>=1.7.0
+
+# Domain-specific additions
+scikit-learn>=1.0.0 # For AI safety experiments
+seaborn>=0.11.0 # Enhanced visualizations
+
+#Optional (add as needed)
+pytest>=7.0.0
+ipykernel>6.0.0

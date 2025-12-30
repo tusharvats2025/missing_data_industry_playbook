@@ -1,0 +1,26 @@
+# Virtual environment
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.coverage
+menv/
+*.egg-info/
+
+# Results (optional: you might want to commit these)
+results/
+*.csv
+*.png
+
+# IDE
+.vcode/
+.idea/
+
+domains/
+benchmarks/
