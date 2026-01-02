@@ -119,3 +119,116 @@ def inject_mar(
 
     return data_missing
 
+# =======================================================================
+# MNAR: Missing Not At Random
+# =======================================================================
+
+def inject_mnar(
+        data: pd.DataFrame,
+        target_column: str,
+        beta: float,
+        intercept: float,
+        seed: int = 42
+) -> pd.DataFrame:
+    """
+    Docstring for inject_mnar
+    Inject MNAR missingness: P(R=0 | Y) = σ(β·Y + γ)
+
+    Missingness depends on the UNOBSERVED value iteself (target_column).
+    This is the hardest case - the missing values are not missing at random.
+
+    Args:
+        data: Dataframe with complete data.
+        target_column: Column to inject missingness into.
+        beta: Coefficient for target itself
+        intercept: Intercept term
+        seed: Random seed
+    Return:
+        DataFrame with MNAR missingness
+    """
+
+    np.random.seed(seed)
+
+    n = len(data)
+
+    #Normalise target to [0,1] range
+    Y = data[target_column].values
+    Y_norm = (Y - Y.min()) / (Y.max() - Y.min())
+
+    # Logistic probability of being missing
+    logit = beta * Y_norm + intercept
+    prob_missing = expit(logit)
+
+    # Sample missing indicator
+    R = np.random.binomial(1, 1 - prob_missing)
+
+    # Apply missingness
+    data_missing = data.copy()
+    data_missing.loc[R == 0, target_column] = np.nan
+
+    n_missing = (R == 0).sum()
+    actual_rate = n_missing/n
+
+    print(f"  MNAR injected: {n_missing}/{n} missing ({actual_rate:.1%})")
+    print(f"  Depends on: {target_column} itself (UNOBSERVED when missing)")
+
+
+    return data_missing
+
+# ===========================================================================
+# ANAYLYSIS FUNCTIONS
+# ===========================================================================
+
+def analyze_missingness(
+        data_complete: pd.DataFrame,
+        data_missing: pd.DataFrame,
+        target_column: str
+) -> Dict:
+    """
+    Docstring for analyze_missingness
+    Analyze missingness pattern
+
+    Compute basic statistics about the missing data:
+    - Missing rate
+    - Mean of observed vs complete
+    - Distribution comparison
+
+    Args:
+      data_complete: Original complete data
+      data_missing: Data with missingness
+      target_column: Column with missing values
+
+    Returns:
+      Dictionary with analysis results
+    
+    """
+
+    complete_values = data_complete[target_column].values
+    observed_mask = ~data_missing[target_column].isna()
+    observed_values = data_missing[target_column].dropna().values
+
+    n_total = len(data_complete)
+    n_missing = (~observed_mask).sum()
+    missing_rate = n_missing / n_total
+
+    # Compare means 
+    mean_complete = np.mean(complete_values)
+    mean_observed = np.mean(observed_values)
+    mean_bias = mean_observed - mean_complete
+
+    # Compare standard deviations
+    std_complete = np.std(complete_values)
+    std_observed = np.std(observed_values)
+
+    results = {
+        'missing_rate': missing_rate,
+        'n_missing': n_missing,
+        'n_observed': n_total - n_missing,
+        'means_complete': mean_complete,
+        'mean_observed': mean_observed,
+        'std_complete': std_complete,
+        'std_observed': std_observed,
+        'observed_mask': observed_mask
+    }
+
+    return results
