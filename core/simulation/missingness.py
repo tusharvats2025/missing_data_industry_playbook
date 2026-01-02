@@ -63,4 +63,59 @@ def inject_mcar(
 
     return data_missing
 
+# =========================================================================
+# MAR: Missing at random
+# =========================================================================
+
+def inject_mar(
+        data: pd.DataFrame,
+        target_column: str,
+        predictor_column: str,
+        alpha: float,
+        intercept: float,
+        seed: int = 42
+) -> pd.DataFrame:
+    """
+    Docstring for inject_mar
+    Inject MAR missingness: P(R=0 | X) = σ(α·X + β)
+
+    Missingness depends on an OBSERVED variable (predictor_column).
+    Uses logistic regression to create realistic dependency.
+
+    Args:
+        data: DataFrame with complete Data.
+        target_column: Column to inject missingness into
+        predictor_column: Observed column that affects missingness
+        alpha: Coefficient for predictor (slope)
+        intercept: Intercept term (bias)
+        seed: Random seed
+    Returns:
+       DatFrame with MAR missingness
+    """
+    np.random.seed(seed)
+
+    n = len(data)
+
+    # Normalise predictor to [0, 1] range for stability
+    X = data[predictor_column].values
+    X_norm = (X - X.min()) / (X.max() - X.min())
+
+    # Logistic probability of being missing
+    logit = alpha * X_norm + intercept
+    prob_missing = expit(logit) # σ(z) = 1 / (1 + exp(-z))
+
+    # Sample missingness indicator
+    R = np.random.binomial(1, 1 - prob_missing)
+
+    # Apply missingness
+    data_missing = data.copy()
+    data_missing.loc[R == 0, target_column] = np.nan
+
+    n_missing = (R == 0).sum()
+    actual_rate = n_missing / n
+
+    print(f"  MAR injected: {n_missing}/{n} missing ({actual_rate:.1%})")
+    print(f"  Depends on: {predictor_column}")
+
+    return data_missing
 
