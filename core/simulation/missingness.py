@@ -232,3 +232,111 @@ def analyze_missingness(
     }
 
     return results
+
+def visualize_missingness(
+        data_complete: pd.DataFrame,
+        data_missing: pd.DataFrame,
+        target_column: str,
+        mechanism: str,
+        output_path: Optional[str] = None
+):
+    """
+    Create diagnostic plots for missingness pattern
+
+    Plots:
+    1. Time series with missing gaps highlighted
+    2. Distribution comparison (complete vs observed)
+    3. Missingness pattern over time
+
+    Args:
+       data_complete: Original complete data
+       data_missing: Data with missingness
+       target_column: Column with missing values
+       mechanism: "MCAR", "MAR", or "MNAR"
+       output_path: Where to save figure(optional)
+    
+    """
+    observed_mask = ~data_missing[target_column].isna()
+
+    fig, axes = plt.subplots(3, 1, figsize=(12, 10))
+
+    # Plot 1: Time Series with gaps
+    ax = axes[0]
+    timestamps = data_complete['timestamp'].values
+
+    # Plot compelete data in light color
+    ax.plot(timestamps[:500], data_complete[target_column].values[:500],
+            'o-', makersize=2, linewidth=0.5, alpha=0.3, label='Complete', color='grey')
+    
+
+    # Plot observed data in bold
+    observed_times = timestamps[observed_mask][:500]
+    observed_vals = data_missing[target_column].dropna().values[:min(500, observed_mask.sum())]
+    ax.plot(observed_times, observed_vals,
+            'o-', markersize=3, linewidth=1, label='Observed', color='blue')
+    
+    # Highlight missing regions
+    missing_times = timestamps[~observed_mask][:500]
+    if len(missing_times) > 0:
+        for t in missing_times:
+            ax.axvline(t, color='red', alpha=0.1, linewidth=2)
+
+    ax.set_xlabel('Timestamp')
+    ax.set_ylabel(target_column.capitalize())
+    ax.set_title(f'{mechanism}: Time Series with Missing data (First 500 steps)')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+
+    # Plot 2: Distribution comparison
+    ax = axes[1]
+    bins = np.linspace(
+        min(data_complete[target_column].min(), data_missing[target_column].min()),
+        max(data_complete[target_column].max(), data_missing[target_column].max()),
+        50
+    )
+
+    ax.hist(data_complete[target_column], bins=bins, alpha=0.5,
+            label='Complete', color='gray', edgecolor='black')
+    ax.hist(data_missing[target_column].dropna(), bins=bins, alpha=0.7,
+            label='Observed', color='blue', edgecolor='black')
+    
+    # Add mean lines
+    ax.axvline(data_complete[target_column].mean(), color='gray',
+               linestyle='--', linewidth=2, label='Complete Mean')
+    ax.axvline(data_missing[target_column].mean(), color='blue',
+               linestyle='--', linewidth=2, label='Observed Mean')
+    
+    ax.set_xlabel(target_column.capitalize())
+    ax.set_ylabel('Frequency')
+    ax.set_title(f'{mechanism}: Distribution Comparison')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+
+    # plot 3: missingness heatmap over time
+    ax = axes[2]
+
+    # Create binary indicator (1=observed, 0=missing)
+    inidcator = observed_mask.astype(int)
+
+    # Reshape into blocks for visualization (e.g., 100 blocks of 100 timestamps)
+    n_blocks = 100
+    block_size = len(inidcator) // n_blocks
+    blocked = inidcator[:n_blocks * block_size].reshape(n_blocks, block_size)
+
+    # Plot as heatmap
+    im = ax.imshow(blocked.T, cmap='RdYlGn', aspect='auto', interpolation='nearest')
+    ax.set_xlabel('Time Block')
+    ax.set_ylabel('Within-Block Timestep')
+    ax.set_title(f'{mechanism}: Missingness Pattern Heatmap (Green=Observed, Red=Missing)')
+    plt.colorbar(im , ax=ax, label='Observed (1) vs Missing (0)')
+
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=100, bbox_inches='tight')
+        print(f" Saved: {output_path}")
+    else:
+        plt.show()
+    plt.close()
+
+
