@@ -339,4 +339,186 @@ def visualize_missingness(
         plt.show()
     plt.close()
 
+def compare_mechanisms(
+        data_complete: pd.DataFrame,
+        target_column: str,
+        configs: Dict
+) -> pd.DataFrame:
+    """
+    Compare all three mechanisms side-by-side
+    Args:
+       data_complete: Original complete data.
+       target_column: Column to inject missingness into.
+       configs: Dictonary with keys 'mcar', 'mar', 'mnar' containing parameters.
+    Returns:
+       DataFrame with comparison statistics 
+    """
+
+    results = []
+
+    # MCAR
+    if 'mcar' in configs:
+        data_mcar = inject_mcar(
+            data_complete,
+            target_column,
+            configs['mcar']['probability'],
+            seed=42
+        )
+        analysis = analyze_missingness(data_complete, data_mcar, target_column)
+        results.append({
+            'mechanism': 'MCAR',
+            'missing_rate': analysis['missing_rate'],
+            'mean_bias': analysis['mean_bias'],
+            'std_complete': analysis['std_complete'],
+            'std_observed': analysis['std_observed']
+        })
+
+    # MAR
+    if 'mar' in configs:
+        data_mar = inject_mar(
+            data_complete,
+            target_column,
+            configs['mar']['predictor'],
+            configs['mar']['alpha'],
+            configs['mar']['intercept'],
+            seed=42
+        )
+        analysis = analyze_missingness(data_complete, data_mar, target_column)
+        results.append({
+            'mechanism': 'MAR',
+            'missing_rate': analysis['missing_rate'],
+            'mean_bias': analysis['mean_bias'],
+            'std_complete': analysis['std_complete'],
+            'std_observed': analysis['std_observed']
+        })
+
+    # MNAR
+    if 'mnar' in configs:
+        data_mnar = inject_mnar(
+            data_complete,
+            target_column,
+            configs['mnar']['beta'],
+            configs['mnar']['intercept'],
+            seed=42
+        )
+        analysis = analyze_missingness(data_complete, data_mnar, target_column)
+        results.append({
+            'mechanism': 'MNAR',
+            'missing_rate': analysis['missing_rate'],
+            'mean_bias': analysis['mean_bias'],
+            'std_complete': analysis['std_complete'],
+            'std_observed': analysis['std_observed']
+        })
+
+    return pd.DataFrame(results)
+
+# =============================================================================
+# TESTING
+# =============================================================================
+
+if __name__ == "__main__":
+    from .config import get_config
+
+    print("="*60)
+    print("MISSINGNESS MECHANISMS TEST")
+    print("="*60)
+
+    # Load ground truth
+    data = pd.read_csv('data/raw/ground_truth.csv')
+    config = get_config()
+    target = config.missingness.target_sensor
+
+    print(f"\n Testing on sensor: {target}")
+    print(f"  Complete data shape: {data.shape}")
+
+    # Test MCAR
+    print("\n" + "-"*60)
+    print("Testing MCAR...")
+    print("-"*60)
+    data_mcar = inject_mcar(data, target, 0.3, seed=42)
+    analysis_mcar = analyze_missingness(data, data_mcar, target)
+    print(f"  Mean bias: {analysis_mcar['mean_bias']:+.4f}")
+
+    # Save
+    data_mcar.to_csv('data/processed/mcar_data.csv', index=False)
+    print(" Saved to: data/processed/mcar_data.csv")
+
+    #Visualize
+    output_dir = Path('results/figures')
+    output_dir.mkdir(parents=True, exist_ok=True)
+    visualize_missingness(
+        data, data_mcar, target, 'MCAR',
+        output_path=str(output_dir / 'phase2_mcar_analysis.png')
+    )
+
+    # Test MAR
+    print("/n" + "-"*60)
+    print("Testing MAR...")
+    print("-"*60)
+    data_mar = inject_mar(
+        data, target,
+        config.missingness.mar_predictor,
+        config.missingness.mar_alpha,
+        config.missingness.mar_intercept,
+        seed=42
+    )
+
+    analysis_mar = analyze_missingness(data, data_mar, target)
+    print(f" Mean bias: {analysis_mar['mean_bias']:+.4f}")
+
+    data_mar.to_csv('data/processed/mar_data.csv', index= False)
+    print("  Saved to: data/processed/mar_data.csv")
+
+    visualize_missingness(
+        data, data_mar, target, 'MAR',
+        output_path=str(output_dir / 'phase2_mar_analysis.png')
+    )
+
+    # Test MNAR
+    print("\n" + "-"*60)
+    print("Testing MNAR...")
+    print("-"+60)
+    data_mnar = inject_mnar(
+        data, target,
+        config.missingness.mnar_beta,
+        config.missingness.mnar_intercept,
+        seed=42
+    )
+    analysis_mnar = analyze_missingness(data, data_mnar, target)
+    print(f"  Mean bias: {analysis_mnar['mean_bias']:+.4f}")
+
+    data_mnar.to_csv('data/processed/mnar_data.csv', index=False)
+    print("  Saved to: data/processed/mnar_data.csv")
+
+    visualize_missingness(
+        data, data_mnar, target, 'MNAR',
+        output_path=str(output_dir / 'phase2_mnar_analysis.png')
+    )
+
+    # Comparison
+    print("/n" + "="*60)
+    print("MECHANISM COMPARISON")
+    print("="*60)
+
+    comparison_configs= {
+        'mcar': {'probability':0.3},
+        'mar': {
+            'predictor': config.missingness.mar_predictor,
+            'alpha': config.missingness.mar_alpha,
+            'intercept': config.missingness.mar_intercept
+        },
+        'mnar':{
+            'beta': config.missingness.mnar_beta,
+            'intercept': config.missingness.mnar_intercept
+        }
+    }
+
+    comparison = compare_mechanisms(data, target, comparison_configs)
+    print("\n", comparison.to_string(index=False))
+
+    comparison.to_csv('results/metrics/phase2_mechanism_comparison.csv', index=False)
+    print("\n  Comaparison saved to: results/metrics/phase2_mechanism_comparison.csv")
+
+
+
 
