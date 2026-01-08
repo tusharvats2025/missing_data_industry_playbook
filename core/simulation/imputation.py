@@ -247,3 +247,84 @@ def knn_imputation(
     print(f"  KNN imutation: filled {n_imputed} values (k={k})")
 
     return data_imputed
+
+
+# ================================================================
+# UNIFIED INTERFACE
+# ================================================================
+
+def apply_imputation(
+        data: pd.DataFrame,
+        target_column: str,
+        method: str,
+        predictor_columns: Optional[List[str]] = None,
+        k: int = 5
+)-> pd.DataFrame:
+    """
+    Apply specified imputation method
+
+    Args:
+        data: DataFrame with missing values
+        target_column: Colume to impute
+        method: One of ['mean', 'forward_fill', 'linear_interpolation', 'regression', 'knn']
+        predictor_columns: For regression/knn methods,
+        k: For KNN method
+    Returns:
+        DataFrame with imputed values
+    """
+
+    if method == 'mean':
+        return mean_imputation(data, target_column)
+    elif method == 'forward_fill':
+        return forward_fill(data, target_column)
+    elif method == 'linear_interpolation':
+        return linear_interpolation(data, target_column)
+    elif method == 'regression':
+        if predictor_columns is None:
+            raise ValueError("predictor_columns required for regression imputation")
+        return regression_imputation(data, target_column, predictor_columns)
+    elif method == 'knn':
+        if predictor_columns is None:
+            raise ValueError("predictor_columns required for KNN imputation")
+        return knn_imputation(data, target_column, predictor_columns, k)
+    else:
+        raise ValueError(f"Unknown method: {method}")
+    
+
+def impute_all_methods(
+        data: pd.DataFrame,
+        target_column: str,
+        predictor_columns: Optional[List[str]] = None,
+        methods: Optional[List[str]] = None
+)-> dict:
+    """
+    Apply all imputation methods and return results
+    
+    Args:
+        data: DataFrame with missing values
+        target_column: Column to impute
+        predictor_colums: For model-based methods
+        methods: List of methods to test (None = all)
+    Returns:
+        Dictionary mapping method name to imputed DataFrame
+    """
+    if methods is None:
+        methods = ['mean', 'forward_fill', 'linear_interpolation']
+        if predictor_columns is not None:
+            methods.extend(['regression', 'knn'])
+    results = {}
+
+    for method in methods:
+        print(f"\n Applying {method}...")
+        try:
+            results[method] = apply_imputation(
+                data.copy(),
+                target_column,
+                method,
+                predictor_columns
+            )
+        except Exception as e:
+            print(f"  Failed: {e}")
+            results[method] = None
+
+    return results
