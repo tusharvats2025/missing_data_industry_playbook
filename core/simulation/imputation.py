@@ -178,3 +178,72 @@ def regression_imputation(
     print(f"  Regression imputation: filled {n_imputed} values (R²={r2:.3f})")
     
     return data_imputed
+
+def knn_imputation(
+        data: pd.DataFrame,
+        target_column: str,
+        predictor_columns: List[str],
+        k: int = 5
+) -> pd.DataFrame:
+    """
+    Impute using k-nearest neighbors
+
+    For each missing value, find k most similar complete cases and average.
+
+    Pros: Non-parametric, flexible
+    Cons: Computationally expensivem sensitive to k
+    
+    Args:
+        data: DataFrame with missing values.
+        target_columns: Column to impute.
+        predicture_columns: Columns to use for similarity.
+        k:  Number of neighbors
+    Returns:
+        DataFrame with imputes values
+    """
+    data_imputed = data.copy()
+
+    # Get masks
+    observed_mask = ~data[target_column].isna()
+    missing_mask = data[target_column].isna()
+
+    # Check predictions
+    if data[predictor_columns].isna().any().any():
+        print("  Warning: Predictiors contain missing values, filling with mean")
+        for col in predictor_columns:
+            data_imputed[col].fillna(data_imputed[col].mean(), inplace=True)
+
+    
+    # Prepare data
+    X_complete = data_imputed.loc[observed_mask, predictor_columns].values
+    Y_complete = data_imputed.loc[observed_mask, target_column].values
+    X_missing = data_imputed.loc[missing_mask, predictor_columns].values
+
+    # Normalize features for distance calculation
+    X_mean = X_complete.mean(axis=0)
+    X_std = X_complete.std(axis=0) + 1e-8 #Avoid division by zero
+
+    X_complete_norm = (X_complete - X_mean) / X_std
+    X_missing_norm = (X_missing - X_mean) / X_std
+
+    # For each missing point, fins k nearest neighbors
+    predictions = []
+
+    for x_miss in X_missing_norm:
+        # Compute Euclidean distances
+        distances = np.sqrt(np.sum((X_complete_norm - x_miss)**2, axis=1))
+
+        # Find k nearest
+        k_nearest_idx = np.argsort(distances)[:k]
+
+        #Average their target values
+        pred = np.mean(Y_complete[k_nearest_idx])
+        predictions.append(pred)
+
+    # Fill in predictions
+    data_imputed.loc[missing_mask, target_column] = predictions
+
+    n_imputed = missing_mask.sum()
+    print(f"  KNN imutation: filled {n_imputed} values (k={k})")
+
+    return data_imputed
