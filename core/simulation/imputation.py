@@ -83,5 +83,34 @@ def forward_fill(
 
     return data_imputed
 
+def linear_interpolation(
+        data: pd.DataFrame,
+        target_column: str
+) -> pd.DataFrame:
+    """
+    Replace missing values with linear interpolation between observed points
+
+    Pros: Smooth, reasonable for time Series
+    Cons: Assumes linear trends, reduces variance
+
+    Args:
+        data: DataFrame with missing values(must be time-ordered)
+        target_column: Column to impute
+    Returns:
+        DataFrame with imputed values
+    """
+    data_imputed = data.copy()
+
+    # Interpolate
+    data_imputed[target_column] = data_imputed[target_column].interpolate(
+        method='linear',
+        limit_direction='both'
+    )
+
+    n_imputed = data[target_column].isna().sum()
+    print(f"  Linear intepolation: filled {n_imputed} values")
+
+    return data_imputed
+
 
 
