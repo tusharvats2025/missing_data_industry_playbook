@@ -101,3 +101,70 @@ def compute_mae(
     """
     mae = np.mean(np.abs(true_values - imputed_values))
     return mae
+
+# ========================================================================
+# DISTRIBUTION METRICS
+# ========================================================================
+
+def compare_kl_divergence(
+        true_values: np.ndarray,
+        imputed_values: np.ndarray,
+        n_bins: int = 50
+)-> float:
+    """
+    Compute KL divergence between distributions
+
+    Measures how much the imputed distribution differs from true distribution.
+    KL(P||Q) = sum P(x) * log(P(x)/Q(x))
+
+    Args:
+        true_values: Ground truth values
+        imputed_values: Imputed values
+        n_bins: Number of bins for histogram
+    Returns:
+        KL divergence (always >= 0, lower is better)
+    """
+
+    # Create common bins
+    combined = np.concatenate([true_values, imputed_values])
+    bins = np.linspace(combined.min(), combined.max(), n_bins + 1)
+
+    # Compute histograms
+    hist_true, _ = np.histogram(true_values, bins=bins)
+    hist_imputed, _ = np.histogram(imputed_values, bins=bins)
+
+    # Normalise to probabilities
+    p = hist_true / (hist_true.sum() + 1e-10)
+    q = hist_imputed / (hist_imputed.sum() + 1e-10)
+
+    # Add small constant to avoid log(0)
+    p = p + 1e-10
+    q = q + 1e-10
+
+    # Compute KL divergence
+    kl = np.sum(p * np.log(p / q))
+
+    return kl
+
+def compute_ks_statistic(
+        true_values: np.ndarray,
+        imputed_values: np.ndarray
+)-> Dict[str, float]:
+    """
+    Compute Kolomogrov-Smirnov test statistics.
+
+    Measures maximum difference between comulative distributions.
+
+    Args:
+        true_values: Ground truth values
+        imputed_values: Imputed values
+    Returns:
+        Dictionary with statistic and p-value
+    """
+    statistic, pvalue = stats.ks_2samp(true_values, imputed_values)
+
+    return {
+        'statistic': statistic,
+        'pvalue': pvalue
+    }
+
