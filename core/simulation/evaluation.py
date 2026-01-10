@@ -168,3 +168,65 @@ def compute_ks_statistic(
         'pvalue': pvalue
     }
 
+# ============================================================================
+# TEMPORAL METRICS
+# ============================================================================
+
+def compute_autocorrelation(
+        series: np.ndarray,
+        lag: int = 1
+)-> float:
+    """
+    Compute autocorrelation at given lag
+
+    Args:
+        series: Time series
+        lag: Lag value
+
+    Returns: 
+        Autocorrelation coefficient
+    """
+
+    n = len(series)
+    mean = np.mean(series)
+
+    c0 = np.sum((series - mean)** 2) / n
+    c_lag = np.sum((series[:-lag] - mean) * (series[lag:] - mean)) / n
+
+    if c0 == 0:
+        return np.nan
+    return c_lag / c0
+
+def compute_autocorrelation_preservation(
+        true_series: np.ndarray,
+        imputed_series: np.ndarray,
+        max_lag: int = 10
+)-> Dict[str, float]:
+    """
+    Measure how well autocorrelation structure is preserved.
+
+    Args:
+        true_series: True time series.
+        imputed_series: Imputed time series.
+        max_lag : Maximum lag to check
+    Returns:
+        Dictionary with ACF preservatiom metrics
+    """
+    acf_true = [compute_autocorrelation(true_series, lag) for lag in range(1, max_lag + 1)]
+    acf_imputed = [compute_autocorrelation(imputed_series, lag) for lag in range(1, max_lag + 1)]
+
+    # Compute RMSE of ACF
+    acf_true = np.array(acf_true)
+    acf_imputed = np.array(acf_imputed)
+
+    acf_rmse = np.sqrt(np.mean((acf_true, acf_imputed) ** 2))
+
+    # Compute correlation between ACFs
+    acf_correlation = np.corrcoef(acf_true, acf_imputed)[0, 1]
+
+    return {
+        'acf_rmse': acf_rmse,
+        'acf_correlation': acf_correlation,
+        'acf_true': acf_true.tolist(),
+        'acf_imputed': acf_imputed.tolist()
+    }
