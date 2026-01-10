@@ -230,3 +230,200 @@ def compute_autocorrelation_preservation(
         'acf_true': acf_true.tolist(),
         'acf_imputed': acf_imputed.tolist()
     }
+
+# ========================================================================
+# COMPREHENSIVE EVALUATION
+# ========================================================================
+
+def evaluate_imputation(
+        data_true: pd.DataFrame,
+        data_imputed: pd.DataFrame,
+        target_column: str,
+        method_name: str = "Unknown"
+) -> Dict:
+    """
+    Comprehensive evaluation of imputation quality
+
+    Args:
+        data_true: DataFrame with ground truth.
+        data_imputed: DataFrame with imputed values.
+        target_column: Column that was imputed.
+        method_column: Column that was imputed.
+    
+    Returns:
+        Dictionary with all metrics
+    """
+    true_vals = data_true[target_column].values
+    imputed_vals = data_imputed[target_column].values
+
+    # Basic metrics
+    bias = compute_bias(true_vals, imputed_vals)
+    rmse = compute_rmse(true_vals, imputed_vals)
+    mae = compute_mae(true_vals, imputed_vals)
+    var_ratio = compute_variance_ratio(true_vals, imputed_vals)
+
+    # Distribution metrics
+    kl_div = compare_kl_divergence(true_vals, imputed_vals)
+    ks_result = compute_ks_statistic(true_vals, imputed_vals)
+
+    # Tempporal metrics
+    acf_metrics = compute_autocorrelation_preservation(true_vals, imputed_vals)
+
+    results = {
+        'method': method_name,
+        'bias': bias,
+        'rmse': rmse,
+        'mae': mae,
+        'variance_ratio': var_ratio,
+        'kl_divergence': kl_div,
+        'ks_statistic': ks_result['statistic'],
+        'ks_pvalue': ks_result['pvalue'],
+        'acf_rmse': acf_metrics['acf_rmse'],
+        'acf_correlation': acf_metrics['acf_correlation']
+    }
+
+    return results
+
+def compare_methods(
+        data_true: pd.DataFrame,
+        imputed_datasets: Dict[str, pd.DataFrame],
+        target_columm: str
+)-> pd.DataFrame:
+    """
+    Compare multiple imputation methods
+
+
+    Args:
+        data_true: DataFrame with ground truth.
+        imputed_datasets: Dictionary mapping method name to imputed DataFrame.
+        target_column: Column that was imputed.
+    
+    Returns:
+        DataFrame with comparison results.
+    """
+
+    results = []
+
+    for method_name, data_imputed in imputed_datasets.items():
+        if data_imputed is not None:
+            metrics = evaluate_imputation(
+                data_true,
+                data_imputed,
+                target_columm,
+                method_name
+            )
+            results.append(metrics)
+    
+    df_results = pd.DataFrame(results)
+
+    # Sort by RMSE (primary metric)
+    df_results = df_results.sort_values('rmse')
+
+    return df_results
+
+def print_evaluation_report(evaluation_results: pd.DataFrame):
+    """
+    Print formatted evaluation report
+
+    Args:
+        evaluation_results: DataFrame from compare_methods()
+    """
+    print("\n" + "="*80)
+    print("IMPUTATION EVALUATION REPORT")
+    print("="*80)
+
+    # Key metrics table
+    print("\nKey Metrics:")
+    print("-"*80)
+    print(f"{'Method':<20} {'Bias':>10} {'RMSE':>10} {'MAE':>10}{'Var Ratio':>10}")
+    print("-"*80)
+
+    for _, row in evaluation_results.iterrows():
+        print(f"{row['method']:<20} "
+              f"{row['bias']:>+10.4f} "
+              f"{row['rmse']:>10.4f} "
+              f"{row['mae']:>10.4f} "
+              f"{row['varience_ratio']:.10.4f}")
+    
+    print("\n Distribution Metrics:")
+    print("-"*80)
+    print(f"{'Method':<20} {'KL Div':>12} {'KS Stat':>12} {'KS p-value':>12}")
+    print("-"*80)
+
+    print(f"{'Method':<20} {'KL Div':>12} {'KS Stat':>12} {'KS p-value':>12}")
+    print("-"*80)
+    
+    for _, row in evaluation_results.iterrows():
+        print(f"{row['method']:<20} "
+              f"{row['kl_divergence']:>12.4f} "
+              f"{row['ks_statistic']:>12.4f} "
+              f"{row['ks_pvalue']:>12.4f}")
+    
+    print("\n⏰ Temporal Metrics:")
+    print("-"*80)
+    print(f"{'Method':<20} {'ACF RMSE':>12} {'ACF Corr':>12}")
+    print("-"*80)
+    
+    for _, row in evaluation_results.iterrows():
+        print(f"{row['method']:<20} "
+              f"{row['acf_rmse']:>12.4f} "
+              f"{row['acf_correlation']:>12.4f}")
+    
+    print("\n" + "="*80)
+    
+    # Identify best method per metric
+    print("\n🏆 Best Methods by Metric:")
+    print("-"*80)
+    
+    best_bias = evaluation_results.loc[evaluation_results['bias'].abs().idxmin(), 'method']
+    best_rmse = evaluation_results.loc[evaluation_results['rmse'].idxmin(), 'method']
+    best_var = evaluation_results.loc[(evaluation_results['variance_ratio'] - 1.0).abs().idxmin(), 'method']
+    best_kl = evaluation_results.loc[evaluation_results['kl_divergence'].idxmin(), 'method']
+    best_acf = evaluation_results.loc[evaluation_results['acf_rmse'].idxmin(), 'method']
+    
+    print(f"  Lowest absolute bias: {best_bias}")
+    print(f"  Lowest RMSE: {best_rmse}")
+    print(f"  Best variance preservation: {best_var}")
+    print(f"  Lowest KL divergence: {best_kl}")
+    print(f"  Best ACF preservation: {best_acf}")
+    
+    print("="*80)
+
+# ======================================================================================
+# TESTING
+# ======================================================================================
+
+if __name__== "__main__":
+    print("="*60)
+    print("EVALUATION METRICS TEST")
+    print("="*60)
+
+    # Create synthetic test data
+    np.random.seed(42)
+    n = 1000
+    
+    true_vals = np.random.normal(50, 10, n)
+    
+    # Simulate different imputation scenarios
+    perfect = true_vals.copy()
+    biased_high = true_vals + 5  # Systematic overestimation
+    low_variance = true_vals * 0.5 + np.mean(true_vals) * 0.5  # Variance shrinkage
+    
+    print("\n📊 Testing metrics...")
+    
+    print(f"\nPerfect imputation:")
+    print(f"  Bias: {compute_bias(true_vals, perfect):.4f}")
+    print(f"  RMSE: {compute_rmse(true_vals, perfect):.4f}")
+    print(f"  Var ratio: {compute_variance_ratio(true_vals, perfect):.4f}")
+    
+    print(f"\nBiased imputation (+5):")
+    print(f"  Bias: {compute_bias(true_vals, biased_high):.4f}")
+    print(f"  RMSE: {compute_rmse(true_vals, biased_high):.4f}")
+    print(f"  Var ratio: {compute_variance_ratio(true_vals, biased_high):.4f}")
+    
+    print(f"\nLow variance imputation:")
+    print(f"  Bias: {compute_bias(true_vals, low_variance):.4f}")
+    print(f"  RMSE: {compute_rmse(true_vals, low_variance):.4f}")
+    print(f"  Var ratio: {compute_variance_ratio(true_vals, low_variance):.4f}")
+    
+    print("\n✅ Evaluation metrics working correctly!")
