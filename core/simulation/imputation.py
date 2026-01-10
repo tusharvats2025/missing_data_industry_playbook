@@ -328,3 +328,56 @@ def impute_all_methods(
             results[method] = None
 
     return results
+
+# ===========================================================================
+# TESTING
+# ===========================================================================
+
+if __name__ == "__main__":
+    from simulation.config import get_config
+    from simulation.evaluation import compute_bias, compute_rmse
+    import pandas as pd
+    
+    print("="*60)
+    print("IMPUTATION METHODS TEST")
+    print("="*60)
+    
+    config = get_config()
+    
+    # Load data
+    print("\n📂 Loading data...")
+    data_true = pd.read_csv('data/raw/ground_truth.csv')
+    data_mcar = pd.read_csv('data/processed/mcar_data.csv')
+    
+    target = config.missingness.target_sensor
+    predictors = config.imputation.regression_predictors
+    
+    print(f"  Target: {target}")
+    print(f"  Predictors: {predictors}")
+    print(f"  Missing rate: {data_mcar[target].isna().mean():.1%}")
+    
+    # Test all methods
+    print("\n" + "="*60)
+    print("TESTING ALL IMPUTATION METHODS")
+    print("="*60)
+    
+    results = impute_all_methods(data_mcar, target, predictors)
+    
+    # Evaluate each method
+    print("\n" + "="*60)
+    print("EVALUATION SUMMARY")
+    print("="*60)
+    print(f"\n{'Method':<20} {'Bias':>10} {'RMSE':>10}")
+    print("-"*42)
+    
+    for method, data_imputed in results.items():
+        if data_imputed is not None:
+            bias = compute_bias(data_true[target], data_imputed[target])
+            rmse = compute_rmse(data_true[target], data_imputed[target])
+            print(f"{method:<20} {bias:>+10.4f} {rmse:>10.4f}")
+            
+            # Save
+            output_path = f'data/processed/mcar_{method}_imputed.csv'
+            data_imputed.to_csv(output_path, index=False)
+    
+    print("\n✅ All imputation methods tested!")
