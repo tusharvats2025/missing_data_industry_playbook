@@ -221,7 +221,7 @@ def _create_diagnostic_plots(data: pd.DataFrame, config: ProcessConfig):
     n_sensors = len(sensors)
 
     # Plot 1: Time series
-    fig, axes = plt.subplots(n_sensors, 1, figsize=(12, 2,5*n_sensors), sharex=True)
+    fig, axes = plt.subplots(n_sensors, 1, figsize=(12, 2.5*n_sensors), sharex=True)
     if n_sensors == 1:
         axes = [axes]
 
