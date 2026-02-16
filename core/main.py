@@ -60,7 +60,7 @@ def phase_2_mcar():
     print("="*60 + "\n")
 
     try:
-        from .simulation.missingness import inject_mcar, analyze_missingness, visualize_missingness
+        from simulation.missingness import inject_mcar, analyze_missingness, visualize_missingness
         import pandas as pd
         from pathlib import Path
 
