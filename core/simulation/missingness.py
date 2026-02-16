@@ -224,7 +224,7 @@ def analyze_missingness(
         'missing_rate': missing_rate,
         'n_missing': n_missing,
         'n_observed': n_total - n_missing,
-        'means_complete': mean_complete,
+        'mean_complete': mean_complete,
         'mean_observed': mean_observed,
         'std_complete': std_complete,
         'std_observed': std_observed,
