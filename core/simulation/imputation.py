@@ -70,7 +70,11 @@ def forward_fill(
     data_imputed = data.copy()
 
     # Forward Fill
-    data_imputed[target_column].fillna(method='ffill', inplace=True)
+    data_imputed[target_column] = (
+        data_imputed[target_column].
+        ffill()
+        .bfill
+        )
 
     # IF first values are missing, fill with first observed value
     if data_imputed[target_column].isna().any():
