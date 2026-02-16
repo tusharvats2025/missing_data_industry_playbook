@@ -219,7 +219,7 @@ def compute_autocorrelation_preservation(
     acf_true = np.array(acf_true)
     acf_imputed = np.array(acf_imputed)
 
-    acf_rmse = np.sqrt(np.mean((acf_true, acf_imputed) ** 2))
+    acf_rmse = np.sqrt(np.mean((acf_true - acf_imputed) ** 2))
 
     # Compute correlation between ACFs
     acf_correlation = np.corrcoef(acf_true, acf_imputed)[0, 1]
