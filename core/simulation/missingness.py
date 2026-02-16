@@ -317,12 +317,12 @@ def visualize_missingness(
     ax = axes[2]
 
     # Create binary indicator (1=observed, 0=missing)
-    inidcator = observed_mask.astype(int)
+    indicator = observed_mask.astype(int).values
 
     # Reshape into blocks for visualization (e.g., 100 blocks of 100 timestamps)
     n_blocks = 100
-    block_size = len(inidcator) // n_blocks
-    blocked = inidcator[:n_blocks * block_size].reshape(n_blocks, block_size)
+    block_size = len(indicator) // n_blocks
+    blocked = indicator[:n_blocks * block_size].reshape(n_blocks, block_size)
 
     # Plot as heatmap
     im = ax.imshow(blocked.T, cmap='RdYlGn', aspect='auto', interpolation='nearest')
