@@ -77,13 +77,13 @@ def phase_2_mcar():
             seed=config.seed
         )
 
-        print("\n Analyzing missingness pattern...")
+        print("\n |Analyzing missingness pattern...|")
         analysis = analyze_missingness(data, data_mcar, config.missingness.target_sensor)
 
-        print(f"  Missing rate: {analysis['missing_rate']:.1%}")
-        print(f"  Mean(complete): {analysis['mean_complete']:.2f}")
-        print(f"  Mean(observed): {analysis['mean_observed']:.2f}")
-        print(f"  Mean bias: {analysis['mean_bias']:+.4f}")
+        print(f"  |-Missing rate: {analysis['missing_rate']:.1%}|")
+        print(f"  |-Mean(complete): {analysis['mean_complete']:.2f}|")
+        print(f"  |-Mean(observed): {analysis['mean_observed']:.2f}|")
+        print(f"  |-Mean bias: {analysis['mean_bias']:+.4f}")
 
         # Save data
         output_dir = Path('data/processed')
@@ -91,7 +91,7 @@ def phase_2_mcar():
         data_mcar.to_csv(output_dir / 'mcar_data.csv', index=False)
         
         # Create visualizations
-        print("\n Creating diagnostic plots...")
+        print("\n |Creating diagnostic plots...")
         fig_dir = Path('results/figures')
         fig_dir.mkdir(parents=True, exist_ok=True)
         visualize_missingness(
@@ -220,11 +220,11 @@ def phase_4_mar():
             seed=config.seed
         )
         
-        print("\n Analyzing missingness pattern...")
+        print("\n |Analyzing missingness pattern...")
         analysis = analyze_missingness(data, data_mar, target)
         
-        print(f"  Missing rate: {analysis['missing_rate']:.1%}")
-        print(f"  Mean bias: {analysis['mean_bias']:+.4f}")
+        print(f"  |-Missing rate: {analysis['missing_rate']:.1%}")
+        print(f"  |-Mean bias: {analysis['mean_bias']:+.4f}")
         
         # Save data
         output_dir = Path('data/processed')
@@ -922,7 +922,7 @@ def phase_8_visualization():
         # Save report
         report_text = "\n".join(report)
         report_path = Path('results') / 'FINAL_REPORT.txt'
-        with open(report_path, 'w') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write(report_text)
         
         print(report_text)
