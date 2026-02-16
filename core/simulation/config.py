@@ -1,7 +1,7 @@
 """
-simulation/config.py
-Central configuration for all experiments.
+simulation/config.pyor all experiments.
 
+Central configuration f
 All parameters are defined here for reproducitility.
 """
 import numpy as np

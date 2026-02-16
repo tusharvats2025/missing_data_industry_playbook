@@ -12,6 +12,7 @@ __pycache__/
 .coverage
 menv/
 *.egg-info/
+.ipynb
 
 # Results (optional: you might want to commit these)
 results/

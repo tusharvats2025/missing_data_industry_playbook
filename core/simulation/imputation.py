@@ -334,8 +334,8 @@ def impute_all_methods(
 # ===========================================================================
 
 if __name__ == "__main__":
-    from simulation.config import get_config
-    from simulation.evaluation import compute_bias, compute_rmse
+    from config import get_config
+    from evaluation import compute_bias, compute_rmse
     import pandas as pd
     
     print("="*60)
