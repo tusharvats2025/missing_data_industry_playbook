@@ -343,7 +343,7 @@ def print_evaluation_report(evaluation_results: pd.DataFrame):
               f"{row['bias']:>+10.4f} "
               f"{row['rmse']:>10.4f} "
               f"{row['mae']:>10.4f} "
-              f"{row['variance_ratio']:.10.4f}")
+              f"{row['variance_ratio']:>10.4f}")
     
     print("\n Distribution Metrics:")
     print("-"*80)
