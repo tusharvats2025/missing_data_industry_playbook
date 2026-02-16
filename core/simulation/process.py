@@ -38,7 +38,7 @@ def generate_ar1_series(
     np.random.seed(seed)
 
     # Pre-allocate array
-    series = np.zeroes(n_steps)
+    series = np.zeros(n_steps)
     series[0] = initial_value
 
     # Generate white noise
