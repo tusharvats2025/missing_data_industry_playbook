@@ -214,7 +214,7 @@ def validate_ground_truth(data: pd.DataFrame, config: ProcessConfig) -> Dict:
 def _create_diagnostic_plots(data: pd.DataFrame, config: ProcessConfig):
     """Create diagnostic plots for ground truth data"""
 
-    output_dir = Path('results/figure')
+    output_dir = Path('results/figures')
     output_dir.mkdir(parents=True, exist_ok=True)
 
     sensors = config.sensors

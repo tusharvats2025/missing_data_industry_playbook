@@ -225,6 +225,7 @@ def analyze_missingness(
         'n_missing': n_missing,
         'n_observed': n_total - n_missing,
         'mean_complete': mean_complete,
+        'mean_bias' : mean_bias,
         'mean_observed': mean_observed,
         'std_complete': std_complete,
         'std_observed': std_observed,
@@ -266,7 +267,7 @@ def visualize_missingness(
 
     # Plot compelete data in light color
     ax.plot(timestamps[:500], data_complete[target_column].values[:500],
-            'o-', makersize=2, linewidth=0.5, alpha=0.3, label='Complete', color='grey')
+            'o-', markersize=2, linewidth=0.5, alpha=0.3, label='Complete', color='grey')
     
 
     # Plot observed data in bold
