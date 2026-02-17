@@ -189,19 +189,19 @@ This phase studies how performance changes as missingness increases.
 ## 8️⃣ Final Synthesis & Key Insights
 ![Final Summary](results/figures/phase8_final_summary.png)
 
-#### What v1 is Capable of
+### What v1 is Capable of
  -- Mechanism-aware imputation evaluation.
  -- Distributional and temporal diagnostics.
  -- Failure-mode analysis (not just accuracy ranking).
 
-#### Known Limitations (Expilicitly Acknowledged)
+### Known Limitations (Expilicitly Acknowledged)
  -- Single imputation only (no uncertainty quantification).
  -- No confidence intervals.
  -- Ground truth schema is fixed.
 
-#### v2 Roadmap(Plug-and-Play Extension)
+### v2 Roadmap(Plug-and-Play Extension)
 
-Planned enhancements:
+#### Planned enhancements:
  -- CSV schema adapter to map arbitrary datasets → ground_truth.csv.
  -- Automated preprocessing (scaling, alignment, stationarity checks).
  -- Multiple Imputation (MI) with uncertainty bounds.
