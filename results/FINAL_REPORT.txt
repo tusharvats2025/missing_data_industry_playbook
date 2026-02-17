@@ -1,0 +1,93 @@
+================================================================================
+MISSING DATA MECHANISMS: CASE STUDY FINAL REPORT
+================================================================================
+
+PROJECT OBJECTIVE
+--------------------------------------------------------------------------------
+Rigorous study of MCAR, MAR, and MNAR missing data mechanisms using
+simulated real-time sensor data, proving mathematically and empirically
+how different handling techniques succeed or fail.
+
+================================================================================
+KEY FINDINGS
+================================================================================
+
+1. BEST IMPUTATION METHOD BY MECHANISM (30% missing)
+--------------------------------------------------------------------------------
+   MCAR  : linear_interpolation
+           RMSE: 1.0031, Bias: -0.0018, Var Ratio: 0.9458
+   MAR   : linear_interpolation
+           RMSE: 0.5834, Bias: -0.0112, Var Ratio: 0.9919
+   MNAR  : linear_interpolation
+           RMSE: 0.7248, Bias: -0.0040, Var Ratio: 0.9797
+
+2. MOST ROBUST METHOD ACROSS ALL MECHANISMS
+--------------------------------------------------------------------------------
+   linear_interpolation
+   Average RMSE: 0.7704
+   Average |Bias|: 0.0057
+
+3. MECHANISM DIFFICULTY RANKING
+--------------------------------------------------------------------------------
+   (Lower RMSE = easier to handle)
+   MAR   : 1.0565
+   MNAR  : 1.2201
+   MCAR  : 1.5927
+
+4. BREAKING POINTS (when RMSE doubles from 10% → 70% missing)
+--------------------------------------------------------------------------------
+   forward_fill        : MCAR:39%, MAR:26%, MNAR:37%
+   linear_interpolation: MCAR:39%, MAR:37%, MNAR:37%
+   regression          : MCAR:61%, MAR:50%, MNAR:50%
+
+5. VARIANCE SHRINKAGE ANALYSIS
+--------------------------------------------------------------------------------
+   Methods that preserve variance (ratio ≈ 1.0):
+   MCAR   - linear_interpolation (0.946)
+   MAR    - linear_interpolation (0.992)
+   MAR    - forward_fill         (1.091)
+   MNAR   - linear_interpolation (0.980)
+   MNAR   - forward_fill         (1.088)
+
+================================================================================
+PRACTICAL RECOMMENDATIONS
+================================================================================
+
+1. If data is MCAR (random missingness):
+   → Use linear_interpolation
+
+2. If data is MAR (depends on observed variables):
+   → Use linear_interpolation
+   → Incorporate predictor variables
+
+3. If data is MNAR (depends on unobserved values):
+   → Use linear_interpolation but expect bias
+   → Consider sensitivity analysis
+   → Document assumptions explicitly
+
+4. General guidelines:
+   → Missing rate < 30%: Most methods work reasonably
+   → Missing rate 30-50%: Use model-based methods
+   → Missing rate > 50%: Results will be unreliable
+   → Always validate with domain knowledge
+
+================================================================================
+TECHNICAL DETAILS
+================================================================================
+
+Data generation: AR(1) processes with cross-correlations
+Timesteps: 10,000
+Sensors: temperature, humidity, pollution, vibration
+Target sensor: pollution
+Random seed: 42 (fully reproducible)
+
+Imputation methods tested:
+  - Mean imputation (baseline)
+  - Forward fill (time series baseline)
+  - Linear interpolation
+  - Regression imputation (model-based)
+  - KNN imputation (model-based)
+
+================================================================================
+END OF REPORT
+================================================================================

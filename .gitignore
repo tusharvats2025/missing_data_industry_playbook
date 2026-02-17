@@ -14,10 +14,6 @@ menv/
 *.egg-info/
 .ipynb
 
-# Results (optional: you might want to commit these)
-results/
-*.csv
-*.png
 
 # IDE
 .vcode/
