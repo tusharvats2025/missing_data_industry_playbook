@@ -902,7 +902,7 @@ def phase_8_visualization():
         report.append("="*80)
         report.append("")
         report.append(f"Data generation: AR(1) processes with cross-correlations")
-        report.append(f"Timesteps: 10,000")
+        report.append(f"Timesteps: 1000")
         report.append(f"Sensors: temperature, humidity, pollution, vibration")
         report.append(f"Target sensor: pollution")
         report.append(f"Random seed: 42 (fully reproducible)")

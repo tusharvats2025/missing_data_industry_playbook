@@ -71,9 +71,9 @@ def forward_fill(
 
     # Forward Fill
     data_imputed[target_column] = (
-        data_imputed[target_column].
-        ffill()
-        .bfill
+        data_imputed[target_column]
+        .ffill()
+        .bfill()
         )
 
     # IF first values are missing, fill with first observed value

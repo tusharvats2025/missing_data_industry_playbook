@@ -226,7 +226,7 @@ def _create_diagnostic_plots(data: pd.DataFrame, config: ProcessConfig):
         axes = [axes]
 
     for i, sensor in enumerate(sensors):
-        axes[i].plot(data['timestamp'], data[sensor], linewidth=0.5, alpha=0.7)
+        axes[i].plot(data['timestamp'], data[sensor], linewidth=1.5, alpha=0.7)
         axes[i].set_ylabel(sensor.capitalize())
         axes[i].grid(True, alpha=0.3)
 
